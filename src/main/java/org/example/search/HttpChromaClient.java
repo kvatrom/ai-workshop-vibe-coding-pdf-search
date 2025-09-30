@@ -21,22 +21,22 @@ import java.util.stream.Collectors;
  * This client lazily creates collections and caches their IDs.
  */
 public final class HttpChromaClient implements ChromaClient {
- 
-     private final String baseUrl; // e.g., http://localhost:8000
-     private final HttpClient http;
-     private final ObjectMapper json;
-     private final Map<String, String> collectionIdCache = new ConcurrentHashMap<>();
-     private final java.nio.file.Path idCacheDir;
- 
-     public HttpChromaClient(String baseUrl) {
-         this.baseUrl = Objects.requireNonNull(baseUrl, "baseUrl").replaceAll("/$", "");
-         this.http = HttpClient.newBuilder()
-                 .connectTimeout(Duration.ofSeconds(5))
-                 .version(HttpClient.Version.HTTP_1_1)
-                 .build();
-         this.json = new ObjectMapper();
-         this.idCacheDir = java.nio.file.Path.of(System.getProperty("user.dir"), ".chroma-collections");
-     }
+
+    private final String baseUrl; // e.g., http://localhost:8000
+    private final HttpClient http;
+    private final ObjectMapper json;
+    private final Map<String, String> collectionIdCache = new ConcurrentHashMap<>();
+    private final java.nio.file.Path idCacheDir;
+
+    public HttpChromaClient(String baseUrl) {
+        this.baseUrl = Objects.requireNonNull(baseUrl, "baseUrl").replaceAll("/$", "");
+        this.http = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
+        this.json = new ObjectMapper();
+        this.idCacheDir = java.nio.file.Path.of(System.getProperty("user.dir"), ".chroma-collections");
+    }
 
     @Override
     public void upsert(List<UpsertEmbedding> items, String collectionName) {
@@ -181,7 +181,9 @@ public final class HttpChromaClient implements ChromaClient {
             final Object collection = resp.get("collection");
             if (collection instanceof Map<?, ?> cm) {
                 final Object nid = cm.get("id");
-                if (nid != null) return String.valueOf(nid);
+                if (nid != null) {
+                    return String.valueOf(nid);
+                }
             }
         } catch (IllegalStateException ignore) {
             // fall through to other strategies
@@ -193,18 +195,24 @@ public final class HttpChromaClient implements ChromaClient {
             final Object obj = get(url);
             if (obj instanceof Map<?, ?> m) {
                 final Object id = m.get("id");
-                if (id != null) return String.valueOf(id);
+                if (id != null) {
+                    return String.valueOf(id);
+                }
                 final Object collection = m.get("collection");
                 if (collection instanceof Map<?, ?> cm) {
                     final Object nid = cm.get("id");
-                    if (nid != null) return String.valueOf(nid);
+                    if (nid != null) {
+                        return String.valueOf(nid);
+                    }
                 }
             } else if (obj instanceof java.util.List<?> arr) {
                 for (Object o : arr) {
                     if (o instanceof Map<?, ?> m) {
                         if (name.equals(String.valueOf(m.get("name")))) {
                             final Object id = m.get("id");
-                            if (id != null) return String.valueOf(id);
+                            if (id != null) {
+                                return String.valueOf(id);
+                            }
                         }
                     }
                 }
@@ -222,7 +230,9 @@ public final class HttpChromaClient implements ChromaClient {
                     if (o instanceof Map<?, ?> m) {
                         if (name.equals(String.valueOf(m.get("name")))) {
                             final Object id = m.get("id");
-                            if (id != null) return String.valueOf(id);
+                            if (id != null) {
+                                return String.valueOf(id);
+                            }
                         }
                     }
                 }
@@ -233,7 +243,9 @@ public final class HttpChromaClient implements ChromaClient {
                         if (o instanceof Map<?, ?> cm) {
                             if (name.equals(String.valueOf(cm.get("name")))) {
                                 final Object id = cm.get("id");
-                                if (id != null) return String.valueOf(id);
+                                if (id != null) {
+                                    return String.valueOf(id);
+                                }
                             }
                         }
                     }
@@ -263,9 +275,9 @@ public final class HttpChromaClient implements ChromaClient {
                 return Map.of();
             }
             try {
-                return json.readValue(bodyStr, new TypeReference<List<Map<String, Object>>>() {});
+                return json.readValue(bodyStr, new TypeReference<List<Map<String, Object>>>() { });
             } catch (IOException e) {
-                return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() {});
+                return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() { });
             }
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -293,7 +305,7 @@ public final class HttpChromaClient implements ChromaClient {
                 return Map.of();
             }
             try {
-                return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() {});
+                return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() { });
             } catch (IOException parseEx) {
                 // Some endpoints (e.g., /add) may return bare booleans like "true" with 201 status.
                 // In such cases, we don't need a structured response; return an empty map.

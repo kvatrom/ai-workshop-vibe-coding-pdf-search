@@ -20,13 +20,21 @@ public final class SimpleDoc2QueryGenerator implements Doc2QueryGenerator {
         }
         final String summary = summarize(t, 12);
         qs.add("What does this say about: " + summary + "?");
-        if (qs.size() >= n) return qs;
+        if (qs.size() >= n) {
+            return qs;
+        }
         qs.add("Explain the key points about " + summary + ".");
-        if (qs.size() >= n) return qs;
+        if (qs.size() >= n) {
+            return qs;
+        }
         qs.add("Where in the document does it discuss: " + summary + "?");
-        if (qs.size() >= n) return qs;
+        if (qs.size() >= n) {
+            return qs;
+        }
         qs.add("Provide a brief overview of " + summary + ".");
-        if (qs.size() >= n) return qs;
+        if (qs.size() >= n) {
+            return qs;
+        }
         qs.add("How does this section relate to " + summary + "?");
         return qs.subList(0, Math.min(qs.size(), n));
     }

@@ -45,7 +45,9 @@ public final class OpenAIDoc2QueryGenerator implements Doc2QueryGenerator {
     @Override
     public List<String> generateQuestions(String text, int maxQuestions) {
         final int n = Math.max(0, maxQuestions);
-        if (n == 0) return List.of();
+        if (n == 0) {
+            return List.of();
+        }
         final String prompt = buildPrompt(text, n);
         final String payload = '{' +
                 "\"model\":\"" + escape(model) + "\"," +
@@ -78,14 +80,22 @@ public final class OpenAIDoc2QueryGenerator implements Doc2QueryGenerator {
 
     private static List<String> parseBulletList(String raw, int n) {
         final List<String> out = new ArrayList<>();
-        if (raw == null || raw.isBlank()) return out;
+        if (raw == null || raw.isBlank()) {
+            return out;
+        }
         final String[] lines = raw.split("\r?\n");
         for (String line : lines) {
             String s = line.trim();
-            if (s.isEmpty()) continue;
+            if (s.isEmpty()) {
+                continue;
+            }
             s = s.replaceFirst("^[-*\\d+.)\\s]+", "").trim();
-            if (!s.isEmpty()) out.add(s);
-            if (out.size() >= n) break;
+            if (!s.isEmpty()) {
+                out.add(s);
+            }
+            if (out.size() >= n) {
+                break;
+            }
         }
         if (out.isEmpty()) {
             out.add(raw.trim());
@@ -101,5 +111,5 @@ public final class OpenAIDoc2QueryGenerator implements Doc2QueryGenerator {
 
     private static String orDefault(String v, String def) { return v == null || v.isBlank() ? def : v; }
     private static String escape(String s) { return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"); }
-    private static String truncate(String s) { if (s == null) return ""; return s.length() > 300 ? s.substring(0,300) + "…" : s; }
+    private static String truncate(String s) { if (s == null) { return ""; } return s.length() > 300 ? s.substring(0, 300) + "…" : s; }
 }

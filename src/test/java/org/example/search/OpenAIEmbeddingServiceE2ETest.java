@@ -21,7 +21,7 @@ class OpenAIEmbeddingServiceE2ETest {
 
     @Test
     void embedsWithRealOpenAIWhenKeyPresent() {
-        String key = System.getenv("OPENAI_API_KEY");
+        final String key = System.getenv("OPENAI_API_KEY");
         assumeTrue(key != null && !key.isBlank(), "No OpenAI API key set; skipping E2E test");
 
         final OpenAIEmbeddingService svc = new OpenAIEmbeddingService();

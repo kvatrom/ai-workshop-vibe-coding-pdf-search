@@ -101,7 +101,7 @@ public class Main {
             System.err.println("PDF directory not found: " + pdfDir.toAbsolutePath());
             return;
         }
-        long startNanos = System.nanoTime();
+        final long startNanos = System.nanoTime();
         int successCount = 0;
         int failCount = 0;
         try (Stream<Path> files = Files.list(pdfDir)) {
@@ -120,7 +120,7 @@ public class Main {
                     failCount++;
                 }
             }
-            long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000L;
+            final long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000L;
             System.out.println("Indexing finished. Files processed=" + pdfs.size() + ", succeeded=" + successCount + ", failed=" + failCount + ", took=" + elapsedMs + " ms");
         } catch (IOException e) {
             System.err.println("Failed to list PDFs in " + pdfDir + ": " + e.getMessage());

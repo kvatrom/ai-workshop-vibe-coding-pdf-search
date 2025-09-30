@@ -109,7 +109,9 @@ public final class OpenAIEmbeddingService implements EmbeddingService {
     }
 
     private static String truncate(String s) {
-        if (s == null) return "";
+        if (s == null) {
+            return "";
+        }
         return s.length() > 300 ? s.substring(0, 300) + "…" : s;
     }
 }
