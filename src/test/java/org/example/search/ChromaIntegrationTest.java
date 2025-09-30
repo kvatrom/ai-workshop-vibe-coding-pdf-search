@@ -28,7 +28,7 @@ class ChromaIntegrationTest {
 
     @BeforeAll
     static void startChroma() {
-        chroma = new GenericContainer<>(DockerImageName.parse("chromadb/chroma:latest"))
+        chroma = new GenericContainer<>(DockerImageName.parse("chromadb/chroma:0.6.3"))
                 .withExposedPorts(8000)
                 .waitingFor(Wait.forHttp("/").forStatusCode(200).withStartupTimeout(Duration.ofSeconds(60)));
         chroma.start();
