@@ -1,6 +1,6 @@
 # CodeStyleDoc — Conventions and Patterns
 
-Last updated: 2025-09-30 12:13 local
+Last updated: 2025-09-30 12:17 local
 
 Purpose
 - This living document records our conventions, patterns, and agreed rules to ensure consistent authoring and review across the repository.
@@ -73,6 +73,9 @@ Documentation
 - Maintain docs/DiaryLogDoc.md as a chronological log of prompts, decisions, errors, rollbacks, and reasoning. Add an entry for each meaningful change or incident.
 - When codifying a new convention, add an entry here in a short, actionable form and reference any supporting tooling change.
 
+Repository Layout
+- data/pdfs: Local PDF drop folder for indexing. Keep .gitkeep; actual PDFs are ignored by git by default.
+
 Review Checklist (Quick)
 - [ ] Names and intent are clear.
 - [ ] Methods/classes are small and focused; immutability preferred.
@@ -84,3 +87,4 @@ Review Checklist (Quick)
 Change History
 - 2025-09-30: Initial version created; aligned with current codebase (PDFBox extractor, functional interfaces, dummy embeddings, Checkstyle).
 - 2025-09-30 12:13: Added README maintenance note under Documentation; timestamp updated.
+- 2025-09-30 12:17: Documented repository layout for data/pdfs; timestamp updated.

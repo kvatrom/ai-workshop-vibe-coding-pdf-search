@@ -65,3 +65,9 @@ See also
 - docs/SpecDoc.md — living specification (slices, requirements, acceptance criteria)
 - docs/CodeStyleDoc.md — conventions and patterns
 - docs/DiaryLogDoc.md — chronological log
+
+
+## Adding PDFs for indexing
+- Place your PDF files under data/pdfs/.
+- This folder is tracked via a .gitkeep file, while actual PDFs are ignored by git to avoid committing large or private documents.
+- Future slices will add a CLI or minimal API to index these PDFs into a ChromaDB collection.

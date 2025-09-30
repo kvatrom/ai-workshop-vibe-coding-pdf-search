@@ -2,7 +2,7 @@
 
 This document is the living specification for the PDF Semantic Search with ChromaDB project. It captures intent, requirements, and acceptance criteria for each incremental slice. It should be updated alongside code changes.
 
-Last updated: 2025-09-30 (updated for README)
+Last updated: 2025-09-30 (PDF input folder)
 
 ## Purpose and Intent
 - Provide a minimal, testable foundation for ingesting PDFs, generating embeddings, upserting to ChromaDB, and performing semantic search.
@@ -92,6 +92,24 @@ Acceptance Criteria:
 
 Status: Completed
 
+### Slice 5: PDF input folder (this change)
+Intent:
+- Provide a conventional, git-safe place in the repository to drop PDF documents for local experimentation and future indexing flows.
+
+Functional Requirements:
+- Create data/pdfs directory in the repository.
+- Ensure the folder is tracked with a placeholder file (e.g., .gitkeep).
+- Add .gitignore rules to ignore actual PDFs under data/pdfs while keeping the folder tracked.
+- Document the folder usage in README.
+
+Acceptance Criteria:
+- data/pdfs exists in the repo with a .gitkeep.
+- .gitignore prevents committing PDF files from data/pdfs by default.
+- README documents where to place PDFs.
+- Build remains green.
+
+Status: Completed
+
 ## Future Slices (Proposed)
 - Real ChromaDB client integration (HTTP/gRPC) with configurable collection.
 - Configurable chunking strategies (by characters, tokens, or semantic boundaries).
@@ -104,3 +122,6 @@ Status: Completed
 - 2025-09-30: Added Spec Doc artifact and documented Slice 1 and Slice 2 structure.
 - 2025-09-30: Added Diary Log artifact; updated SpecDoc and CodeStyleDoc to reference maintenance of all three docs.
 - 2025-09-30: Added README.md with overview, requirements, and how to run; documented as Slice 4.
+
+
+- 2025-09-30: Added data/pdfs input folder, .gitignore, and README docs; documented as Slice 5.

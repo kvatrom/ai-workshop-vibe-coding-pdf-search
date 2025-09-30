@@ -1,6 +1,6 @@
 # Diary Log
 
-Last updated: 2025-09-30 12:10 local
+Last updated: 2025-09-30 12:17 local
 
 Purpose
 - Keep a chronological, developer-facing log of prompts, decisions, errors, rollbacks, and reasoning tied to repository changes.
@@ -40,3 +40,12 @@ Entry Template
   Errors/Rollbacks: None.
   Reasoning: Improves discoverability and onboarding; aligns with documentation maintenance policy.
   Follow-ups: Consider adding a CLI/REST entry point in a future slice and expand README accordingly.
+
+
+- Timestamp: 2025-09-30 12:17 local
+  Context: Slice 5 — Create a folder for PDFs to be indexed
+  Decisions: Add data/pdfs directory tracked with .gitkeep; add .gitignore to exclude real PDFs; document usage in README; update SpecDoc with Slice 5.
+  Changes: Created data/pdfs/.gitkeep; added .gitignore rules; updated README.md; updated docs/SpecDoc.md (Slice 5 and change log).
+  Errors/Rollbacks: None.
+  Reasoning: Provides a clear, git-safe place to drop PDFs for local experimentation and future indexing pipeline.
+  Follow-ups: Build, commit, and push; later slices to add CLI/API to index PDFs from this folder.
