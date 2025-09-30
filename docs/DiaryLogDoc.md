@@ -1,6 +1,6 @@
 # Diary Log
 
-Last updated: 2025-09-30 13:31 local
+Last updated: 2025-09-30 16:03 local
 
 Purpose
 - Keep a chronological, developer-facing log of prompts, decisions, errors, rollbacks, and reasoning tied to repository changes.
@@ -24,6 +24,14 @@ Entry Template
 ---
 
 ## Entries
+
+- Timestamp: 2025-09-30 16:03 local
+  Context: Process enforcement — keep all three docs updated and run formatting/Checkstyle/tests before every commit/push.
+  Decisions: Added Slice 12 to SpecDoc documenting the process; codified rules in CodeStyleDoc under Process Discipline; updated timestamps across docs.
+  Changes: Updated docs/SpecDoc.md, docs/CodeStyleDoc.md, docs/DiaryLogDoc.md.
+  Errors/Rollbacks: None.
+  Reasoning: Align with requirement to explicitly maintain documentation and enforce green builds before pushing.
+  Follow-ups: Continue to apply this process on every subsequent change.
 
 - Timestamp: 2025-09-30 15:58 local
   Context: Multiple searches failed after initial run due to 409 on create and 405/400 on name/list endpoints in some Chroma 0.6.3 builds.

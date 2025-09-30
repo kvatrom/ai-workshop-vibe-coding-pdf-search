@@ -1,6 +1,6 @@
 # CodeStyleDoc — Conventions and Patterns
 
-Last updated: 2025-09-30 12:17 local
+Last updated: 2025-09-30 16:03 local
 
 Purpose
 - This living document records our conventions, patterns, and agreed rules to ensure consistent authoring and review across the repository.
@@ -77,6 +77,12 @@ Documentation
 - Maintain docs/DiaryLogDoc.md as a chronological log of prompts, decisions, errors, rollbacks, and reasoning. Add an entry for each meaningful change or incident.
 - When codifying a new convention, add an entry here in a short, actionable form and reference any supporting tooling change.
 
+Process Discipline (Always)
+- After each meaningful step/change:
+  - Update all three living docs: SpecDoc.md (slices/acceptance), CodeStyleDoc.md (conventions/process), DiaryLogDoc.md (entry).
+  - Run ./gradlew clean build (this runs Checkstyle and tests). Fix issues until green.
+  - Commit with a descriptive message and push to origin main.
+
 Repository Layout
 - data/pdfs: Local PDF drop folder for indexing. Keep .gitkeep; actual PDFs are ignored by git by default.
 
@@ -92,3 +98,4 @@ Change History
 - 2025-09-30: Initial version created; aligned with current codebase (PDFBox extractor, functional interfaces, dummy embeddings, Checkstyle).
 - 2025-09-30 12:13: Added README maintenance note under Documentation; timestamp updated.
 - 2025-09-30 12:17: Documented repository layout for data/pdfs; timestamp updated.
+- 2025-09-30 16:03: Added Process Discipline section (update 3 docs, run clean build, commit/push after each step); timestamp updated.

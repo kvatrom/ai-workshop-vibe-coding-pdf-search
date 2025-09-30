@@ -2,7 +2,7 @@
 
 This document is the living specification for the PDF Semantic Search with ChromaDB project. It captures intent, requirements, and acceptance criteria for each incremental slice. It should be updated alongside code changes.
 
-Last updated: 2025-09-30 (Removed OPENAOI_API_KEY alias; only OPENAI_API_KEY supported)
+Last updated: 2025-09-30 16:03 (Process slice added: keep docs updated; run format/Checkstyle/tests and push after each step)
 
 ## Purpose and Intent
 - Provide a minimal, testable foundation for ingesting PDFs, generating embeddings, upserting to ChromaDB, and performing semantic search.
@@ -218,6 +218,22 @@ Acceptance Criteria:
 
 Status: Completed
 
+### Slice 12: Process enforcement — keep docs updated and run checks after each step (this change)
+Intent:
+- Ensure process discipline: after each meaningful step, update all three living docs (SpecDoc, CodeStyleDoc, DiaryLog) and run formatting/Checkstyle/tests before committing and pushing.
+
+Functional Requirements:
+- Update all three docs with each change (including CodeStyleDoc when conventions/process are affected).
+- After each step: run ./gradlew clean build (which runs Checkstyle and tests).
+- Commit and push to origin main after a green build.
+
+Acceptance Criteria:
+- The process is documented in SpecDoc and CodeStyleDoc.
+- Diary contains an entry for enabling this process.
+- Build remains green.
+
+Status: Completed
+
 ## Change Log
 - 2025-09-30: Added Spec Doc artifact and documented Slice 1 and Slice 2 structure.
 - 2025-09-30: Added Diary Log artifact; updated SpecDoc and CodeStyleDoc to reference maintenance of all three docs.
@@ -229,3 +245,4 @@ Status: Completed
 - 2025-09-30: Implemented doc2query (synthetic question expansion) with OpenAI and offline fallback; documented as Slice 9.
 - 2025-09-30: Implemented idempotent indexing via stable IDs; documented as Slice 10.
 - 2025-09-30: Ensured Chroma 0.6.3 compatibility and pinned Testcontainers image; documented as Slice 11.
+- 2025-09-30 16:03: Documented process enforcement as Slice 12; all three docs updated; build remains green.
