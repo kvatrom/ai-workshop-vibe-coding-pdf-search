@@ -2,7 +2,7 @@
 
 This document is the living specification for the PDF Semantic Search with ChromaDB project. It captures intent, requirements, and acceptance criteria for each incremental slice. It should be updated alongside code changes.
 
-Last updated: 2025-09-30 (PDF input folder)
+Last updated: 2025-09-30 (Local ChromaDB integration and indexing data/pdfs)
 
 ## Purpose and Intent
 - Provide a minimal, testable foundation for ingesting PDFs, generating embeddings, upserting to ChromaDB, and performing semantic search.
@@ -110,8 +110,28 @@ Acceptance Criteria:
 
 Status: Completed
 
+### Slice 6: Local ChromaDB integration + indexing data/pdfs (this change)
+Intent:
+- Use a local ChromaDB (Docker) instance to index PDFs from data/pdfs and enable real upsert/query flows.
+
+Functional Requirements:
+- Implement a ChromaClient over HTTP to talk to Chroma REST API.
+- Update the application entry point to index all PDFs in data/pdfs into a configured Chroma collection.
+- Provide Testcontainers-based integration test that starts chromadb/chroma and verifies indexing + query.
+
+Non‑Functional Requirements:
+- Keep default unit tests deterministic and offline; run container-based tests under a separate Gradle task.
+- Maintain Java 21 toolchain and Checkstyle compliance.
+
+Acceptance Criteria:
+- ./gradlew clean build is green (integration test excluded by default via tag).
+- ./gradlew integrationTest runs and passes when Docker is available.
+- Running docker run --rm -p 8000:8000 chromadb/chroma:latest and ./gradlew run indexes PDFs from data/pdfs without errors.
+
+Status: Completed
+
 ## Future Slices (Proposed)
-- Real ChromaDB client integration (HTTP/gRPC) with configurable collection.
+- Enhance Chroma client (robust error handling, retries, metadata, delete/upsert semantics).
 - Configurable chunking strategies (by characters, tokens, or semantic boundaries).
 - Real embedding provider integration (e.g., OpenAI or local model) with retry/backoff.
 - Persistence and idempotent indexing (document IDs, page references, metadata).
@@ -125,3 +145,4 @@ Status: Completed
 
 
 - 2025-09-30: Added data/pdfs input folder, .gitignore, and README docs; documented as Slice 5.
+- 2025-09-30: Local ChromaDB integration with HttpChromaClient, Testcontainers integration test, updated README, and runtime indexer in Main; documented as Slice 6.

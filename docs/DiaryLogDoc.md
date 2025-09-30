@@ -1,6 +1,6 @@
 # Diary Log
 
-Last updated: 2025-09-30 12:17 local
+Last updated: 2025-09-30 12:22 local
 
 Purpose
 - Keep a chronological, developer-facing log of prompts, decisions, errors, rollbacks, and reasoning tied to repository changes.
@@ -24,6 +24,14 @@ Entry Template
 ---
 
 ## Entries
+
+- Timestamp: 2025-09-30 12:22 local
+  Context: Slice 6 — Install and use local ChromaDB to index PDFs; Testcontainers for testing
+  Decisions: Implemented HttpChromaClient (REST); updated Main to index data/pdfs into local Chroma; added Testcontainers-based integration test excluded by default via JUnit tag; added application plugin.
+  Changes: build.gradle (application plugin, Testcontainers, integrationTest task); src/main/java/.../HttpChromaClient.java; updated Main to index PDFs; added ChromaIntegrationTest; updated README and SpecDoc.
+  Errors/Rollbacks: Initial build warning about unchecked operations; ensured build passes; integration test tagged to avoid Docker dependency in default build.
+  Reasoning: Meet requirement to use local ChromaDB for real indexing while keeping default build deterministic and green; provide optional integration coverage with containers.
+  Follow-ups: Consider adding real embedding model and richer Chroma client features (metadata, deletes, retries); add CLI/REST for queries.
 
 - Timestamp: 2025-09-30 12:10 local
   Context: Slice 3 — Add DiaryLogDoc.md and keep all three docs in sync

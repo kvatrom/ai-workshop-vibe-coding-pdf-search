@@ -23,9 +23,15 @@ This compiles the project, runs Checkstyle, and executes tests.
 2) Run tests only
 - ./gradlew test
 
-3) Run the app
-- ./gradlew run
-The Main class currently prints a stub message. The most illustrative behavior is in tests.
+3) Run the app (indexes PDFs in data/pdfs into local ChromaDB)
+- Start ChromaDB locally (Docker):
+  docker run --rm -p 8000:8000 chromadb/chroma:latest
+- Place PDFs under data/pdfs/
+- Run the indexer:
+  ./gradlew run
+Environment variables:
+- CHROMA_URL (default http://localhost:8000)
+- COLLECTION_NAME (default pdf-search)
 
 How it works (current stub)
 - PdfTextExtractor (interface): extracts text chunks from a PDF InputStream.
@@ -40,6 +46,11 @@ Try it locally
   See: src/test/java/org/example/search/PdfBoxTextExtractorTest.java
        src/test/java/org/example/search/PdfSearchServiceTest.java
 
+Integration tests with Testcontainers (optional)
+- Requires Docker available locally.
+- Run integration tests (spins up chromadb/chroma:latest):
+  ./gradlew integrationTest
+
 Project structure
 - src/main/java/...    Core classes and interfaces
 - src/test/java/...    JUnit 5 tests
@@ -53,7 +64,7 @@ Common tasks
 
 Extending this stub
 - Replace DummyEmbeddingService with a real embedding provider
-- Implement a real ChromaDB client (HTTP/gRPC)
+- Enhance the ChromaDB client (error handling, retries, metadata)
 - Add a CLI or minimal REST API to index/query PDFs
 - Support alternate chunking strategies (by characters/tokens/semantic)
 

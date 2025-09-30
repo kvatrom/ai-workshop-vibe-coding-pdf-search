@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'checkstyle'
+    id 'application'
 }
 
 group = 'org.example'
@@ -23,6 +24,8 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation 'org.testcontainers:testcontainers:1.20.1'
 }
 
 checkstyle {
@@ -41,4 +44,22 @@ check.dependsOn 'checkstyleMain', 'checkstyleTest'
 
 test {
     useJUnitPlatform()
+    // Exclude integration tests (use Testcontainers) by default
+    filter {
+        excludeTestsMatching "*IntegrationTest"
+    }
+    useJUnitPlatform {
+        excludeTags 'integration'
+    }
+}
+
+// Separate task to run integration tests with Testcontainers
+tasks.register('integrationTest', Test) {
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+}
+
+application {
+    mainClass = 'org.example.Main'
 }
