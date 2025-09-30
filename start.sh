@@ -15,17 +15,28 @@ else
   echo "ChromaDB container ${CHROMA_CONTAINER} already running."
 fi
 
-# Wait for ChromaDB to be ready
+# Wait for ChromaDB to be ready (accept 200/404/etc. as "up" to avoid false negatives)
 CHROMA_URL="http://localhost:${CHROMA_PORT}"
 echo "Waiting for ChromaDB at ${CHROMA_URL} ..."
-for i in {1..60}; do
-  if curl -sSf "${CHROMA_URL}/" >/dev/null 2>&1; then
+ENDPOINTS=("/" "/api/v1/collections" "/api/v1/heartbeat" "/docs")
+READY=0
+for i in {1..180}; do
+  for ep in "${ENDPOINTS[@]}"; do
+    CODE=$(curl -s -o /dev/null -w "%{http_code}" "${CHROMA_URL}${ep}" || true)
+    if [[ -n "$CODE" && "$CODE" != "000" ]]; then
+      echo "ChromaDB responded on ${ep} with HTTP ${CODE}."
+      READY=1
+      break
+    fi
+  done
+  if [[ $READY -eq 1 ]]; then
     echo "ChromaDB is up."
     break
   fi
-  sleep 1
-  if [[ "$i" == "60" ]]; then
-    echo "ChromaDB did not become ready in time" >&2
+  sleep 2
+  if [[ "$i" == "180" ]]; then
+    echo "ChromaDB did not become ready in time (waited ~6 minutes)." >&2
+    echo "Tip: check logs with 'docker logs -f ${CHROMA_CONTAINER}'" >&2
     exit 1
   fi
 done

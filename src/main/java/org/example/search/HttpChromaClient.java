@@ -48,8 +48,8 @@ public final class HttpChromaClient implements ChromaClient {
                 .toList());
         body.put("documents", items.stream().map(UpsertEmbedding::text).toList());
         body.put("metadatas", items.stream().map(UpsertEmbedding::metadata).toList());
-        final String url = baseUrl + "/api/v1/collections/" + cid + "/add";
-        post(url, body);
+        final String urlV1 = baseUrl + "/api/v1/collections/" + cid + "/add";
+        postV1ThenV2(urlV1, body);
     }
 
     @Override
@@ -59,8 +59,8 @@ public final class HttpChromaClient implements ChromaClient {
         final Map<String, Object> body = new HashMap<>();
         body.put("query_embeddings", List.of(toFloatList(embedding)));
         body.put("n_results", topK);
-        final String url = baseUrl + "/api/v1/collections/" + cid + "/query";
-        final Map<String, Object> resp = post(url, body);
+        final String urlV1 = baseUrl + "/api/v1/collections/" + cid + "/query";
+        final Map<String, Object> resp = postV1ThenV2(urlV1, body);
         // Response format (typical): { "ids": [[...]], "distances": [[...]], "documents": [[...]], "metadatas": [[{...}]] }
         final List<List<String>> ids = (List<List<String>>) resp.getOrDefault("ids", List.of());
         final List<List<String>> docs = (List<List<String>>) resp.getOrDefault("documents", List.of());
@@ -96,18 +96,152 @@ public final class HttpChromaClient implements ChromaClient {
 
     private String createCollection(String collectionName) {
         final Map<String, Object> payload = Map.of("name", collectionName);
-        final String url = baseUrl + "/api/v1/collections";
-        final Map<String, Object> resp = post(url, payload);
-        final Object id = resp.get("id");
-        if (id == null) {
-            throw new IllegalStateException("Chroma create collection did not return id: " + resp);
+        // Try multiple endpoints for compatibility across Chroma versions
+        final String[] urls = new String[] {
+                baseUrl + "/api/v1/collections/get_or_create",
+                baseUrl + "/api/v1/collections",
+                baseUrl + "/api/v1/collections/"
+        };
+        final String putByName = baseUrl + "/api/v1/collections/" + java.net.URLEncoder.encode(collectionName, java.nio.charset.StandardCharsets.UTF_8);
+        IllegalStateException last = null;
+        for (String url : urls) {
+            try {
+                final Map<String, Object> resp = post(url, payload);
+                final Object id = resp.get("id");
+                if (id != null) {
+                    return String.valueOf(id);
+                }
+                // Some servers return the full collection object under "collection"
+                final Object coll = resp.get("collection");
+                if (coll instanceof Map<?, ?> m && m.get("id") != null) {
+                    return String.valueOf(m.get("id"));
+                }
+            } catch (IllegalStateException e) {
+                last = e; // keep and try next URL
+            }
         }
-        return String.valueOf(id);
+        // Try PUT by name (some variants may accept this)
+        try {
+            final Map<String, Object> resp = put(putByName, payload);
+            final Object id = resp.get("id");
+            if (id != null) {
+                return String.valueOf(id);
+            }
+            final Object coll = resp.get("collection");
+            if (coll instanceof Map<?, ?> m && m.get("id") != null) {
+                return String.valueOf(m.get("id"));
+            }
+        } catch (IllegalStateException e) {
+            last = e;
+        }
+        // As a last resort, attempt to list collections and find by name
+        try {
+            // Some servers may return a single collection on /collections/{name}
+            try {
+                final Map<String, Object> byName = get(putByName);
+                final Object id = byName.get("id");
+                final Object n = byName.get("name");
+                if (id != null && (n == null || collectionName.equals(String.valueOf(n)))) {
+                    return String.valueOf(id);
+                }
+            } catch (IllegalStateException ignore) {
+                // ignore and try list
+            }
+            final Map<String, Object> listResp = get(baseUrl + "/api/v1/collections");
+            Object cols = listResp.get("collections");
+            if (cols == null) cols = listResp.get("results");
+            if (cols instanceof List<?> arr) {
+                for (Object o : arr) {
+                    if (o instanceof Map<?, ?> m) {
+                        final Object n2 = m.get("name");
+                        final Object id2 = m.get("id");
+                        if (n2 != null && collectionName.equals(String.valueOf(n2)) && id2 != null) {
+                            return String.valueOf(id2);
+                        }
+                    }
+                }
+            }
+        } catch (IllegalStateException ignore) {
+            // fall through to throw last error
+        }
+        // If v1 seems deprecated, try the same sequence under /api/v2
+        if (last != null && isV1Deprecated(last)) {
+            final String[] urlsV2 = new String[] {
+                    baseUrl + "/api/v2/collections/get_or_create",
+                    baseUrl + "/api/v2/collections",
+                    baseUrl + "/api/v2/collections/"
+            };
+            IllegalStateException lastV2 = null;
+            for (String url : urlsV2) {
+                try {
+                    final Map<String, Object> resp = post(url, payload);
+                    final Object id = resp.get("id");
+                    if (id != null) {
+                        return String.valueOf(id);
+                    }
+                    final Object coll = resp.get("collection");
+                    if (coll instanceof Map<?, ?> m && m.get("id") != null) {
+                        return String.valueOf(m.get("id"));
+                    }
+                } catch (IllegalStateException e2) {
+                    lastV2 = e2;
+                }
+            }
+            // Try PUT/GET by name under v2
+            final String putByNameV2 = putByName.replace("/api/v1/", "/api/v2/");
+            try {
+                final Map<String, Object> resp = put(putByNameV2, payload);
+                final Object id = resp.get("id");
+                if (id != null) return String.valueOf(id);
+                final Object coll = resp.get("collection");
+                if (coll instanceof Map<?, ?> m && m.get("id") != null) {
+                    return String.valueOf(m.get("id"));
+                }
+            } catch (IllegalStateException e2) {
+                lastV2 = e2;
+            }
+            try {
+                try {
+                    final Map<String, Object> byName = get(putByNameV2);
+                    final Object id = byName.get("id");
+                    final Object n = byName.get("name");
+                    if (id != null && (n == null || collectionName.equals(String.valueOf(n)))) {
+                        return String.valueOf(id);
+                    }
+                } catch (IllegalStateException ignore) {
+                    // ignore and try list
+                }
+                final Map<String, Object> listResp = get(baseUrl + "/api/v2/collections");
+                Object cols = listResp.get("collections");
+                if (cols == null) cols = listResp.get("results");
+                if (cols instanceof List<?> arr) {
+                    for (Object o : arr) {
+                        if (o instanceof Map<?, ?> m) {
+                            final Object n2 = m.get("name");
+                            final Object id2 = m.get("id");
+                            if (n2 != null && collectionName.equals(String.valueOf(n2)) && id2 != null) {
+                                return String.valueOf(id2);
+                            }
+                        }
+                    }
+                }
+            } catch (IllegalStateException ignore) {
+                // fall through
+            }
+            if (lastV2 != null) {
+                throw lastV2;
+            }
+        }
+        if (last != null) {
+            throw last;
+        }
+        throw new IllegalStateException("Failed to create or find collection '" + collectionName + "'");
     }
 
     private Map<String, Object> post(String url, Map<String, Object> body) {
         try {
             final String requestBody = json.writeValueAsString(body);
+            System.out.println("[DEBUG_LOG] POST " + url);
             final HttpRequest req = HttpRequest.newBuilder(URI.create(url))
                     .timeout(Duration.ofSeconds(10))
                     .header("Content-Type", "application/json")
@@ -115,6 +249,7 @@ public final class HttpChromaClient implements ChromaClient {
                     .build();
             final HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             final int code = resp.statusCode();
+            System.out.println("[DEBUG_LOG] <-- " + code + " from " + url + (resp.body() != null ? ": " + trunc(resp.body()) : ""));
             if (code < 200 || code >= 300) {
                 throw new IllegalStateException("Chroma HTTP " + code + " for " + url + ": " + resp.body());
             }
@@ -127,6 +262,79 @@ public final class HttpChromaClient implements ChromaClient {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("HTTP call to Chroma failed: " + url, e);
         }
+    }
+
+    private Map<String, Object> put(String url, Map<String, Object> body) {
+        try {
+            final String requestBody = json.writeValueAsString(body);
+            System.out.println("[DEBUG_LOG] PUT  " + url);
+            final HttpRequest req = HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofSeconds(10))
+                    .header("Content-Type", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
+                    .build();
+            final HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            final int code = resp.statusCode();
+            System.out.println("[DEBUG_LOG] <-- " + code + " from " + url + (resp.body() != null ? ": " + trunc(resp.body()) : ""));
+            if (code < 200 || code >= 300) {
+                throw new IllegalStateException("Chroma HTTP " + code + " for " + url + ": " + resp.body());
+            }
+            final String bodyStr = resp.body();
+            if (bodyStr == null || bodyStr.isBlank()) {
+                return Map.of();
+            }
+            return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() {});
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("HTTP call to Chroma failed: " + url, e);
+        }
+    }
+
+    private Map<String, Object> postV1ThenV2(String urlV1, Map<String, Object> body) {
+        try {
+            return post(urlV1, body);
+        } catch (IllegalStateException e) {
+            if (isV1Deprecated(e) && urlV1.contains("/api/v1/")) {
+                final String urlV2 = urlV1.replace("/api/v1/", "/api/v2/");
+                System.out.println("[DEBUG_LOG] v1 endpoint deprecated; retrying as v2: " + urlV2);
+                return post(urlV2, body);
+            }
+            throw e;
+        }
+    }
+
+    private boolean isV1Deprecated(IllegalStateException e) {
+        final String msg = String.valueOf(e.getMessage());
+        return msg.contains("v1 API is deprecated") || msg.contains("HTTP 410") || msg.contains("/v2");
+    }
+
+    private Map<String, Object> get(String url) {
+        try {
+            System.out.println("[DEBUG_LOG] GET  " + url);
+            final HttpRequest req = HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofSeconds(10))
+                    .GET()
+                    .build();
+            final HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            final int code = resp.statusCode();
+            System.out.println("[DEBUG_LOG] <-- " + code + " from " + url + (resp.body() != null ? ": " + trunc(resp.body()) : ""));
+            if (code < 200 || code >= 300) {
+                throw new IllegalStateException("Chroma HTTP " + code + " for " + url + ": " + resp.body());
+            }
+            final String bodyStr = resp.body();
+            if (bodyStr == null || bodyStr.isBlank()) {
+                return Map.of();
+            }
+            return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() {});
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("HTTP call to Chroma failed: " + url, e);
+        }
+    }
+
+    private static String trunc(String s) {
+        if (s == null) return "";
+        return s.length() > 300 ? s.substring(0, 300) + "…" : s;
     }
 
     private List<Float> toFloatList(double[] vec) {
