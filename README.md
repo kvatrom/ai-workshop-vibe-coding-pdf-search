@@ -25,29 +25,37 @@ This compiles the project, runs Checkstyle, and executes tests.
 
 3) Run the app (indexes PDFs in data/pdfs into local ChromaDB)
 - Start ChromaDB locally (Docker):
-  docker run --rm -p 8000:8000 chromadb/chroma:latest
+  docker run --rm -p 8000:8000 chromadb/chroma:0.6.3
 - Place PDFs under data/pdfs/
 - Run the indexer:
-  ./gradlew run
+  ./gradlew run --args="index [--dir data/pdfs] [--doc2query-count N] [--no-doc2query]"
 Environment variables:
 - CHROMA_URL (default http://localhost:8000)
 - COLLECTION_NAME (default pdf-search)
-- OPENAI_API_KEY (optional; when set, uses OpenAI embeddings instead of dummy)
+- OPENAI_API_KEY (optional; when set, uses OpenAI embeddings instead of dummy and enables OpenAI doc2query generator)
 - OPENAI_EMBED_MODEL (optional; default text-embedding-3-small)
 - OPENAI_BASE_URL (optional; default https://api.openai.com)
+- OPENAI_DOC2QUERY_MODEL (optional; default gpt-4o-mini)
+- DOC2QUERY_COUNT (optional; default 3)
 
-How it works (current stub)
+How it works (current)
 - PdfTextExtractor (interface): extracts text chunks from a PDF InputStream.
 - PdfBoxTextExtractor (impl): uses Apache PDFBox; returns one chunk per page.
+- SemanticChunker: heuristic sentence-aware chunking with target sizes.
 - EmbeddingService (interface): converts text to a vector embedding.
 - DummyEmbeddingService (impl): deterministic pseudo-embeddings for tests; no network calls.
+- OpenAIEmbeddingService (impl): real embeddings via OpenAI if OPENAI_API_KEY is set.
+- Doc2QueryGenerator (interface): generates synthetic search questions per chunk.
+- OpenAIDoc2QueryGenerator (impl): uses OpenAI chat completions; offline fallback SimpleDoc2QueryGenerator.
 - ChromaClient (interface): minimal Vector DB contract with upsert/query.
-- PdfSearchService: orchestrates extract → embed → upsert and query.
+- HttpChromaClient (impl): HTTP v1 client for Chroma 0.6.x with robust response handling.
+- PdfSearchService: orchestrates extract → (doc2query) → embed → upsert and query.
 
 Try it locally
 - The tests generate small PDFs on the fly and validate extraction and the indexing/search flow with an in-memory fake Chroma client.
   See: src/test/java/org/example/search/PdfBoxTextExtractorTest.java
        src/test/java/org/example/search/PdfSearchServiceTest.java
+       src/test/java/org/example/search/PdfSearchServiceDoc2QueryTest.java
 
 Integration tests with Testcontainers (optional)
 - Requires Docker available locally.
