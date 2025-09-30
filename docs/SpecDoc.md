@@ -2,7 +2,7 @@
 
 This document is the living specification for the PDF Semantic Search with ChromaDB project. It captures intent, requirements, and acceptance criteria for each incremental slice. It should be updated alongside code changes.
 
-Last updated: 2025-09-30 (OpenAI embeddings E2E validation added)
+Last updated: 2025-09-30 (Removed OPENAOI_API_KEY alias; only OPENAI_API_KEY supported)
 
 ## Purpose and Intent
 - Provide a minimal, testable foundation for ingesting PDFs, generating embeddings, upserting to ChromaDB, and performing semantic search.
@@ -162,7 +162,7 @@ Functional Requirements:
 - Add an integration test that is executed only when an API key is present in the environment.
 - The test must call OpenAIEmbeddingService.embed on a sample string and assert a non-empty vector is returned.
 - Keep default unit tests offline; only run this test under the existing integrationTest task.
-- Be tolerant of a common env var typo by supporting OPENAOI_API_KEY as an alias.
+- Only support OPENAI_API_KEY; alias environment variables are not supported.
 
 Acceptance Criteria:
 - ./gradlew clean build remains green without an API key (test skipped and excluded by default due to tag).

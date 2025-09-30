@@ -1,6 +1,6 @@
 # Diary Log
 
-Last updated: 2025-09-30 13:26 local
+Last updated: 2025-09-30 13:31 local
 
 Purpose
 - Keep a chronological, developer-facing log of prompts, decisions, errors, rollbacks, and reasoning tied to repository changes.
@@ -24,6 +24,14 @@ Entry Template
 ---
 
 ## Entries
+
+- Timestamp: 2025-09-30 13:31 local
+  Context: Typo correction — only OPENAI_API_KEY is supported
+  Decisions: Removed support for the alias environment variable OPENAOI_API_KEY across code and tests; keep only OPENAI_API_KEY. Updated SpecDoc to reflect this correction.
+  Changes: Modified OpenAIEmbeddingService constructor to read only OPENAI_API_KEY; updated OpenAIEmbeddingServiceE2ETest to require OPENAI_API_KEY; updated docs/SpecDoc.md and this Diary.
+  Errors/Rollbacks: None; default build expected to remain green; integration test behavior unchanged aside from env var check.
+  Reasoning: Aligns with clarified requirement to use only the correct environment variable and avoid ambiguity.
+  Follow-ups: None at this time.
 
 - Timestamp: 2025-09-30 13:26 local
   Context: Slice 8 — Validate OpenAI API key via E2E test

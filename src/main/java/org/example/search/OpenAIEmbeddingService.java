@@ -29,7 +29,7 @@ public final class OpenAIEmbeddingService implements EmbeddingService {
     private final String model;
 
     public OpenAIEmbeddingService() {
-        this(firstNonBlank(System.getenv("OPENAI_API_KEY"), System.getenv("OPENAOI_API_KEY")),
+        this(System.getenv("OPENAI_API_KEY"),
                 orDefault(System.getenv("OPENAI_BASE_URL"), "https://api.openai.com"),
                 orDefault(System.getenv("OPENAI_EMBED_MODEL"), "text-embedding-3-small"));
     }
