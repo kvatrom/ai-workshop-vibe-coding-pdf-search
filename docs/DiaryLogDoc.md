@@ -32,3 +32,11 @@ Entry Template
   Errors/Rollbacks: None.
   Reasoning: Improves traceability of prompts, decisions, and rationale over time.
   Follow-ups: Ensure build stays green; commit and push to main; continue logging future slices and incidents.
+
+- Timestamp: 2025-09-30 12:13 local
+  Context: Slice 4 — Add README.md with overview, requirements, and how to run
+  Decisions: Create a root-level README as the primary entry point; keep living docs (SpecDoc, CodeStyleDoc, Diary) synchronized.
+  Changes: Added README.md; updated SpecDoc (added Slice 4 and change log); updated CodeStyleDoc (Documentation section and change history).
+  Errors/Rollbacks: None.
+  Reasoning: Improves discoverability and onboarding; aligns with documentation maintenance policy.
+  Follow-ups: Consider adding a CLI/REST entry point in a future slice and expand README accordingly.

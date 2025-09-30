@@ -2,7 +2,7 @@
 
 This document is the living specification for the PDF Semantic Search with ChromaDB project. It captures intent, requirements, and acceptance criteria for each incremental slice. It should be updated alongside code changes.
 
-Last updated: 2025-09-30
+Last updated: 2025-09-30 (updated for README)
 
 ## Purpose and Intent
 - Provide a minimal, testable foundation for ingesting PDFs, generating embeddings, upserting to ChromaDB, and performing semantic search.
@@ -80,6 +80,18 @@ Acceptance Criteria:
 
 Status: Completed
 
+### Slice 4: README artifact (this change)
+Intent:
+- Provide a clear entry point (README.md) explaining project purpose, requirements, and how to build/run/tests.
+
+Functional Requirements:
+- Add README.md at the repository root with overview, exercise requirements, quick start, and pointers to living docs.
+
+Acceptance Criteria:
+- README.md exists and accurately reflects the current stub; build remains green.
+
+Status: Completed
+
 ## Future Slices (Proposed)
 - Real ChromaDB client integration (HTTP/gRPC) with configurable collection.
 - Configurable chunking strategies (by characters, tokens, or semantic boundaries).
@@ -91,3 +103,4 @@ Status: Completed
 ## Change Log
 - 2025-09-30: Added Spec Doc artifact and documented Slice 1 and Slice 2 structure.
 - 2025-09-30: Added Diary Log artifact; updated SpecDoc and CodeStyleDoc to reference maintenance of all three docs.
+- 2025-09-30: Added README.md with overview, requirements, and how to run; documented as Slice 4.

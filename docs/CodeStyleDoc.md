@@ -1,6 +1,6 @@
 # CodeStyleDoc — Conventions and Patterns
 
-Last updated: 2025-09-30 12:10 local
+Last updated: 2025-09-30 12:13 local
 
 Purpose
 - This living document records our conventions, patterns, and agreed rules to ensure consistent authoring and review across the repository.
@@ -68,6 +68,7 @@ Gradle and Dependencies
 - Avoid dynamic versions. Bump versions deliberately via PR and update this doc if rules change.
 
 Documentation
+- Keep README.md accurate as the primary entry point (overview, requirements, how to build/run/tests). Update when project behavior or requirements change.
 - Keep docs/SpecDoc.md up-to-date for slices (intent/requirements/acceptance). Use this CodeStyleDoc.md for conventions.
 - Maintain docs/DiaryLogDoc.md as a chronological log of prompts, decisions, errors, rollbacks, and reasoning. Add an entry for each meaningful change or incident.
 - When codifying a new convention, add an entry here in a short, actionable form and reference any supporting tooling change.
@@ -82,3 +83,4 @@ Review Checklist (Quick)
 
 Change History
 - 2025-09-30: Initial version created; aligned with current codebase (PDFBox extractor, functional interfaces, dummy embeddings, Checkstyle).
+- 2025-09-30 12:13: Added README maintenance note under Documentation; timestamp updated.
