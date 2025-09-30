@@ -25,6 +25,22 @@ Entry Template
 
 ## Entries
 
+- Timestamp: 2025-09-30 15:58 local
+  Context: Multiple searches failed after initial run due to 409 on create and 405/400 on name/list endpoints in some Chroma 0.6.3 builds.
+  Decisions: Separated collection resolution for search (never create) vs upsert (create if missing). Added a lightweight on-disk cache ./.chroma-collections/<name>.id to persist collection IDs across runs. Query now returns empty results if collection cannot be resolved instead of throwing.
+  Changes: Updated HttpChromaClient (resolveCollectionId with createIfMissing flag; file-backed ID cache; query uses non-creating path). Build green.
+  Errors/Rollbacks: None.
+  Reasoning: Ensures repeated searches work reliably even when server lacks by-name endpoints; avoids exceptions and preserves UX.
+  Follow-ups: Consider adding an integration test that covers reusing an existing collection across process restarts; document the cache directory in README if needed.
+
+- Timestamp: 2025-09-30 15:38 local
+  Context: Search failed when collection already existed (Chroma 0.6.3 returned 409 on create and 400 on GET /api/v1/collections)
+  Decisions: Enhanced HttpChromaClient to resolve existing collection IDs via POST /api/v1/collections/get with safe fallbacks (GET ?name=..., then list). Keep HTTP/1.1 and tolerate boolean 201 bodies.
+  Changes: Modified HttpChromaClient; build/tests green; committed and pushed to main. Asked user to pull and retry search.
+  Errors/Rollbacks: None.
+  Reasoning: Fixes 409-handling path on 0.6.3 where listing collections returns 400.
+  Follow-ups: If server variations appear, extend parsing; consider adding an integration test that reuses an existing collection to cover this path.
+
 - Timestamp: 2025-09-30 14:50 local
   Context: Implement doc2query (synthetic question expansion) and wire into CLI; ensure Chroma 0.6.3 compatibility; cleanups
   Decisions: Added Doc2QueryGenerator with OpenAI and offline implementations; extended PdfSearchService to upsert synthetic questions linked to chunks; added CLI flags and env. Adjusted HttpChromaClient to tolerate boolean 201 on /add and forced HTTP/1.1. Removed unused v2 fallback/GET/PUT.

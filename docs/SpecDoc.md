@@ -207,10 +207,13 @@ Intent:
 Functional Requirements:
 - Tolerate boolean 201 response on /api/v1/collections/{id}/add.
 - Force HTTP/1.1 on HttpClient to avoid h2c upgrade issues with some images.
+- Resolve existing collection IDs via POST /api/v1/collections/get to handle 409 conflicts reliably (some 0.6.3 builds return 400 on GET /api/v1/collections).
 - Pin Testcontainers integration test image to chromadb/chroma:0.6.3.
+- Allow multiple search runs without recreating collections; when collection exists but cannot be resolved via API on some builds, use a local on-disk cache of collection IDs.
 
 Acceptance Criteria:
-- Local start.sh uses 0.6.3; indexing runs without exceptions.
+- Local start.sh uses 0.6.3; indexing and search run without exceptions, even if the collection already exists.
+- Multiple consecutive searches do not fail with 409/405/400; at worst, they return empty results if the collection cannot be resolved.
 - Integration tests pass when Docker is available.
 
 Status: Completed

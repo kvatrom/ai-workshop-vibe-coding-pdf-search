@@ -21,20 +21,22 @@ import java.util.stream.Collectors;
  * This client lazily creates collections and caches their IDs.
  */
 public final class HttpChromaClient implements ChromaClient {
-
-    private final String baseUrl; // e.g., http://localhost:8000
-    private final HttpClient http;
-    private final ObjectMapper json;
-    private final Map<String, String> collectionIdCache = new ConcurrentHashMap<>();
-
-    public HttpChromaClient(String baseUrl) {
-        this.baseUrl = Objects.requireNonNull(baseUrl, "baseUrl").replaceAll("/$", "");
-        this.http = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(5))
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
-        this.json = new ObjectMapper();
-    }
+ 
+     private final String baseUrl; // e.g., http://localhost:8000
+     private final HttpClient http;
+     private final ObjectMapper json;
+     private final Map<String, String> collectionIdCache = new ConcurrentHashMap<>();
+     private final java.nio.file.Path idCacheDir;
+ 
+     public HttpChromaClient(String baseUrl) {
+         this.baseUrl = Objects.requireNonNull(baseUrl, "baseUrl").replaceAll("/$", "");
+         this.http = HttpClient.newBuilder()
+                 .connectTimeout(Duration.ofSeconds(5))
+                 .version(HttpClient.Version.HTTP_1_1)
+                 .build();
+         this.json = new ObjectMapper();
+         this.idCacheDir = java.nio.file.Path.of(System.getProperty("user.dir"), ".chroma-collections");
+     }
 
     @Override
     public void upsert(List<UpsertEmbedding> items, String collectionName) {
@@ -42,7 +44,7 @@ public final class HttpChromaClient implements ChromaClient {
         if (items.isEmpty()) {
             return;
         }
-        final String cid = ensureCollection(collectionName);
+        final String cid = resolveCollectionId(collectionName, true);
         final Map<String, Object> body = new HashMap<>();
         body.put("ids", items.stream().map(UpsertEmbedding::id).toList());
         body.put("embeddings", items.stream()
@@ -58,13 +60,17 @@ public final class HttpChromaClient implements ChromaClient {
     @Override
     @SuppressWarnings("unchecked")
     public List<SearchResult> query(double[] embedding, String collectionName, int topK) {
-        final String cid = ensureCollection(collectionName);
+        final String cid = resolveCollectionId(collectionName, false);
+        if (cid == null || cid.isBlank()) {
+            // Could not resolve collection; treat as empty results instead of failing
+            return List.of();
+        }
         final Map<String, Object> body = new HashMap<>();
         body.put("query_embeddings", List.of(toFloatList(embedding)));
         body.put("n_results", topK);
         final String url = baseUrl + "/api/v1/collections/" + cid + "/query";
         final Map<String, Object> resp = post(url, body);
-        // Response format (typical): { "ids": [[...]], "distances": [[...]], "documents": [[...]], "metadatas": [[{...}]] }
+        // Response format (typical): { "ids": [[...]], "distances": [[...]], "documents": [[...]], "metadatas": [[...]] }
         final List<List<String>> ids = (List<List<String>>) resp.getOrDefault("ids", List.of());
         final List<List<String>> docs = (List<List<String>>) resp.getOrDefault("documents", List.of());
         final List<List<Double>> distances = (List<List<Double>>) resp.getOrDefault("distances", List.of());
@@ -94,7 +100,40 @@ public final class HttpChromaClient implements ChromaClient {
     }
 
     private String ensureCollection(String collectionName) {
-        return collectionIdCache.computeIfAbsent(collectionName, this::createCollection);
+        return resolveCollectionId(collectionName, true);
+    }
+
+    private String resolveCollectionId(String collectionName, boolean createIfMissing) {
+        Objects.requireNonNull(collectionName, "collectionName");
+        // In-memory cache
+        final String cached = collectionIdCache.get(collectionName);
+        if (cached != null && !cached.isBlank()) {
+            return cached;
+        }
+        // File cache in project dir
+        final String fileId = readCachedId(collectionName);
+        if (fileId != null && !fileId.isBlank()) {
+            collectionIdCache.put(collectionName, fileId);
+            return fileId;
+        }
+        if (createIfMissing) {
+            final String id = createCollection(collectionName);
+            if (id != null) {
+                writeCachedId(collectionName, id);
+                collectionIdCache.put(collectionName, id);
+                return id;
+            }
+            throw new IllegalStateException("Failed to create or resolve collection: " + collectionName);
+        } else {
+            final String id = getCollectionIdByName(collectionName);
+            if (id != null && !id.isBlank()) {
+                writeCachedId(collectionName, id);
+                collectionIdCache.put(collectionName, id);
+                return id;
+            }
+            // Could not resolve existing collection; return null so callers can handle gracefully
+            return null;
+        }
     }
 
     private String createCollection(String collectionName) {
@@ -106,13 +145,16 @@ public final class HttpChromaClient implements ChromaClient {
             if (id == null) {
                 throw new IllegalStateException("Chroma create collection did not return id: " + resp);
             }
-            return String.valueOf(id);
+            final String sid = String.valueOf(id);
+            writeCachedId(collectionName, sid);
+            return sid;
         } catch (IllegalStateException e) {
             if (isConflict(e)) {
                 // Collection likely exists; try to find its ID by name via reliable endpoint(s)
                 final String id = getCollectionIdByName(collectionName);
                 if (id != null) {
                     System.out.println("[DEBUG_LOG] Collection '" + collectionName + "' exists; using id=" + id);
+                    writeCachedId(collectionName, id);
                     return id;
                 }
             }
@@ -266,6 +308,34 @@ public final class HttpChromaClient implements ChromaClient {
 
 
 
+
+    private String readCachedId(String name) {
+        try {
+            final java.nio.file.Path path = idCacheDir.resolve(safeName(name) + ".id");
+            if (java.nio.file.Files.exists(path)) {
+                final String s = java.nio.file.Files.readString(path, java.nio.charset.StandardCharsets.UTF_8);
+                return s == null ? null : s.trim();
+            }
+        } catch (Exception ignore) {
+            // ignore cache read errors
+        }
+        return null;
+    }
+
+    private void writeCachedId(String name, String id) {
+        if (name == null || name.isBlank() || id == null || id.isBlank()) return;
+        try {
+            java.nio.file.Files.createDirectories(idCacheDir);
+            final java.nio.file.Path path = idCacheDir.resolve(safeName(name) + ".id");
+            java.nio.file.Files.writeString(path, id, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception ignore) {
+            // ignore cache write errors
+        }
+    }
+
+    private static String safeName(String name) {
+        return name == null ? "" : name.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
 
     private static String trunc(String s) {
         if (s == null) return "";
