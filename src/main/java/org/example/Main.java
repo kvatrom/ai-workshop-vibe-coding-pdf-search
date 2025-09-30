@@ -101,6 +101,9 @@ public class Main {
             System.err.println("PDF directory not found: " + pdfDir.toAbsolutePath());
             return;
         }
+        long startNanos = System.nanoTime();
+        int successCount = 0;
+        int failCount = 0;
         try (Stream<Path> files = Files.list(pdfDir)) {
             final List<Path> pdfs = files.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".pdf")).toList();
             if (pdfs.isEmpty()) {
@@ -111,10 +114,14 @@ public class Main {
                 System.out.println("Indexing: " + path.getFileName());
                 try (InputStream in = Files.newInputStream(path)) {
                     service.indexPdf(in, path.getFileName().toString());
+                    successCount++;
                 } catch (IOException e) {
                     System.err.println("Failed to index " + path + ": " + e.getMessage());
+                    failCount++;
                 }
             }
+            long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000L;
+            System.out.println("Indexing finished. Files processed=" + pdfs.size() + ", succeeded=" + successCount + ", failed=" + failCount + ", took=" + elapsedMs + " ms");
         } catch (IOException e) {
             System.err.println("Failed to list PDFs in " + pdfDir + ": " + e.getMessage());
         }
