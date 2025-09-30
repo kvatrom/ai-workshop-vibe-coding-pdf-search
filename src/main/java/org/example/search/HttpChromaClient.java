@@ -335,7 +335,9 @@ public final class HttpChromaClient implements ChromaClient {
     }
 
     private void writeCachedId(String name, String id) {
-        if (name == null || name.isBlank() || id == null || id.isBlank()) return;
+        if (name == null || name.isBlank() || id == null || id.isBlank()) {
+            return;
+        }
         try {
             java.nio.file.Files.createDirectories(idCacheDir);
             final java.nio.file.Path path = idCacheDir.resolve(safeName(name) + ".id");
@@ -350,7 +352,9 @@ public final class HttpChromaClient implements ChromaClient {
     }
 
     private static String trunc(String s) {
-        if (s == null) return "";
+        if (s == null) {
+            return "";
+        }
         return s.length() > 300 ? s.substring(0, 300) + "…" : s;
     }
 

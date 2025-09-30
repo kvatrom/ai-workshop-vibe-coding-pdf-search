@@ -44,7 +44,9 @@ public final class SimpleDoc2QueryGenerator implements Doc2QueryGenerator {
         final int take = Math.min(words.length, Math.max(3, maxWords));
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < take; i++) {
-            if (i > 0) sb.append(' ');
+            if (i > 0) {
+                sb.append(' ');
+            }
             sb.append(words[i].toLowerCase(Locale.ROOT));
         }
         return sb.toString();
