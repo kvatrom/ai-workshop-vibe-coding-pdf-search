@@ -127,80 +127,22 @@ public final class HttpChromaClient implements ChromaClient {
             if (bodyStr == null || bodyStr.isBlank()) {
                 return Map.of();
             }
-            return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() {});
-        } catch (IOException | InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("HTTP call to Chroma failed: " + url, e);
-        }
-    }
-
-    private Map<String, Object> put(String url, Map<String, Object> body) {
-        try {
-            final String requestBody = json.writeValueAsString(body);
-            System.out.println("[DEBUG_LOG] PUT  " + url);
-            final HttpRequest req = HttpRequest.newBuilder(URI.create(url))
-                    .timeout(Duration.ofSeconds(10))
-                    .header("Content-Type", "application/json")
-                    .PUT(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
-                    .build();
-            final HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            final int code = resp.statusCode();
-            System.out.println("[DEBUG_LOG] <-- " + code + " from " + url + (resp.body() != null ? ": " + trunc(resp.body()) : ""));
-            if (code < 200 || code >= 300) {
-                throw new IllegalStateException("Chroma HTTP " + code + " for " + url + ": " + resp.body());
-            }
-            final String bodyStr = resp.body();
-            if (bodyStr == null || bodyStr.isBlank()) {
+            try {
+                return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() {});
+            } catch (IOException parseEx) {
+                // Some endpoints (e.g., /add) may return bare booleans like "true" with 201 status.
+                // In such cases, we don't need a structured response; return an empty map.
+                System.out.println("[DEBUG_LOG] Non-JSON object response, ignoring body for " + url + ": " + trunc(bodyStr));
                 return Map.of();
             }
-            return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() {});
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("HTTP call to Chroma failed: " + url, e);
         }
     }
 
-    private Map<String, Object> postV1ThenV2(String urlV1, Map<String, Object> body) {
-        try {
-            return post(urlV1, body);
-        } catch (IllegalStateException e) {
-            if (isV1Deprecated(e) && urlV1.contains("/api/v1/")) {
-                final String urlV2 = urlV1.replace("/api/v1/", "/api/v2/");
-                System.out.println("[DEBUG_LOG] v1 endpoint deprecated; retrying as v2: " + urlV2);
-                return post(urlV2, body);
-            }
-            throw e;
-        }
-    }
 
-    private boolean isV1Deprecated(IllegalStateException e) {
-        final String msg = String.valueOf(e.getMessage());
-        return msg.contains("v1 API is deprecated") || msg.contains("HTTP 410") || msg.contains("/v2");
-    }
 
-    private Map<String, Object> get(String url) {
-        try {
-            System.out.println("[DEBUG_LOG] GET  " + url);
-            final HttpRequest req = HttpRequest.newBuilder(URI.create(url))
-                    .timeout(Duration.ofSeconds(10))
-                    .GET()
-                    .build();
-            final HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            final int code = resp.statusCode();
-            System.out.println("[DEBUG_LOG] <-- " + code + " from " + url + (resp.body() != null ? ": " + trunc(resp.body()) : ""));
-            if (code < 200 || code >= 300) {
-                throw new IllegalStateException("Chroma HTTP " + code + " for " + url + ": " + resp.body());
-            }
-            final String bodyStr = resp.body();
-            if (bodyStr == null || bodyStr.isBlank()) {
-                return Map.of();
-            }
-            return json.readValue(bodyStr, new TypeReference<Map<String, Object>>() {});
-        } catch (IOException | InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("HTTP call to Chroma failed: " + url, e);
-        }
-    }
 
     private static String trunc(String s) {
         if (s == null) return "";

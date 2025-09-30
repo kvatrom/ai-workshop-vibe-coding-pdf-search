@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Configuration (override via env before calling):
 # Pin to a stable Chroma v1 image to match our v1 client
-CHROMA_IMAGE="${CHROMA_IMAGE:-chromadb/chroma:0.4.24}"
+CHROMA_IMAGE="${CHROMA_IMAGE:-chromadb/chroma:0.6.3}"
 CHROMA_CONTAINER="${CHROMA_CONTAINER:-chroma_pdf_search}"
 CHROMA_PORT="${CHROMA_PORT:-8000}"
 COLLECTION_NAME="${COLLECTION_NAME:-pdf-search}"
