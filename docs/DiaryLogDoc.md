@@ -1,6 +1,6 @@
 # Diary Log
 
-Last updated: 2025-09-30 12:22 local
+Last updated: 2025-09-30 12:30 local
 
 Purpose
 - Keep a chronological, developer-facing log of prompts, decisions, errors, rollbacks, and reasoning tied to repository changes.
@@ -24,6 +24,14 @@ Entry Template
 ---
 
 ## Entries
+
+- Timestamp: 2025-09-30 12:30 local
+  Context: Slice 7 — Add OpenAI embeddings client (optional)
+  Decisions: Implemented OpenAIEmbeddingService using Java HttpClient with env-based configuration (OPENAI_API_KEY, OPENAI_EMBED_MODEL, OPENAI_BASE_URL). Updated Main to auto-select OpenAI when key is present; otherwise keep DummyEmbeddingService. Updated README and SpecDoc.
+  Changes: Added src/main/java/org/example/search/OpenAIEmbeddingService.java; modified Main.java; updated README.md; updated docs/SpecDoc.md; updated Diary timestamp.
+  Errors/Rollbacks: None; build remains green with tests offline.
+  Reasoning: Provide a real embedding path without impacting deterministic tests or requiring credentials by default.
+  Follow-ups: Consider retries/backoff and model configurability via CLI flags in future slices.
 
 - Timestamp: 2025-09-30 12:22 local
   Context: Slice 6 — Install and use local ChromaDB to index PDFs; Testcontainers for testing

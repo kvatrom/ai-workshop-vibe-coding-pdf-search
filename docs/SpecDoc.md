@@ -2,7 +2,7 @@
 
 This document is the living specification for the PDF Semantic Search with ChromaDB project. It captures intent, requirements, and acceptance criteria for each incremental slice. It should be updated alongside code changes.
 
-Last updated: 2025-09-30 (Local ChromaDB integration and indexing data/pdfs)
+Last updated: 2025-09-30 (OpenAI embeddings client optional)
 
 ## Purpose and Intent
 - Provide a minimal, testable foundation for ingesting PDFs, generating embeddings, upserting to ChromaDB, and performing semantic search.
@@ -146,3 +146,23 @@ Status: Completed
 
 - 2025-09-30: Added data/pdfs input folder, .gitignore, and README docs; documented as Slice 5.
 - 2025-09-30: Local ChromaDB integration with HttpChromaClient, Testcontainers integration test, updated README, and runtime indexer in Main; documented as Slice 6.
+
+
+### Slice 7: OpenAI embeddings client (this change)
+Intent:
+- Provide an optional real embedding provider using OpenAI’s embeddings API while keeping default tests offline/deterministic.
+
+Functional Requirements:
+- Implement OpenAIEmbeddingService implementing EmbeddingService using Java HttpClient.
+- Configure via environment variables: OPENAI_API_KEY (required to enable), OPENAI_EMBED_MODEL (default text-embedding-3-small), OPENAI_BASE_URL (default https://api.openai.com).
+- Update Main to auto-select OpenAIEmbeddingService when OPENAI_API_KEY is present; otherwise fall back to DummyEmbeddingService.
+
+Acceptance Criteria:
+- ./gradlew clean build remains green without any OpenAI key (tests offline, deterministic).
+- README documents how to provide OPENAI_API_KEY and optional overrides.
+- Running with OPENAI_API_KEY set uses OpenAI embeddings at runtime.
+
+Status: Completed
+
+## Change Log
+- 2025-09-30: Added OpenAIEmbeddingService and runtime selection via env var; updated README; documented as Slice 7.

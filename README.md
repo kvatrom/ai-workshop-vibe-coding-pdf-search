@@ -32,6 +32,9 @@ This compiles the project, runs Checkstyle, and executes tests.
 Environment variables:
 - CHROMA_URL (default http://localhost:8000)
 - COLLECTION_NAME (default pdf-search)
+- OPENAI_API_KEY (optional; when set, uses OpenAI embeddings instead of dummy)
+- OPENAI_EMBED_MODEL (optional; default text-embedding-3-small)
+- OPENAI_BASE_URL (optional; default https://api.openai.com)
 
 How it works (current stub)
 - PdfTextExtractor (interface): extracts text chunks from a PDF InputStream.
@@ -61,6 +64,16 @@ Project structure
 Common tasks
 - Lint (Checkstyle reports): after a build, check reports in build/reports/checkstyle
 - Update docs: keep SpecDoc, CodeStyleDoc, DiaryLog up to date with each change
+
+Using OpenAI embeddings (optional)
+- Set your API key as an environment variable before running:
+  export OPENAI_API_KEY="sk-..."
+- Optional overrides:
+  export OPENAI_EMBED_MODEL="text-embedding-3-small"   # default
+  export OPENAI_BASE_URL="https://api.openai.com"      # default; set to your gateway if needed
+- Then run the app as usual (it will automatically use OpenAI embeddings):
+  ./gradlew run
+- Note: Do not commit your API key. Store it in your shell profile or a secure secret manager.
 
 Extending this stub
 - Replace DummyEmbeddingService with a real embedding provider

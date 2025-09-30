@@ -53,6 +53,10 @@ Errors and Exceptions
 Logging
 - For this stub, we use System.out only in Main; avoid println in library code. If/when logging is introduced, prefer slf4j facade and keep logs structured and minimal.
 
+Secrets and Configuration
+- Do not commit secrets. Provide credentials via environment variables (e.g., OPENAI_API_KEY). Document required env vars in README.
+- Keep defaults safe; code should operate in a deterministic, offline mode when secrets are absent (e.g., fall back to DummyEmbeddingService).
+
 Collections and Streams
 - Do not expose internal mutable collections. Prefer unmodifiable views or defensive copies if necessary.
 - Use List.toList() (Java 16+) or Collectors.toUnmodifiableList() when immutability is desired.

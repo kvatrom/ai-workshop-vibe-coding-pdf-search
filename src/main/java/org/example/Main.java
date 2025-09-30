@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.example.search.ChromaClient;
 import org.example.search.DummyEmbeddingService;
 import org.example.search.HttpChromaClient;
+import org.example.search.OpenAIEmbeddingService;
 import org.example.search.PdfBoxTextExtractor;
 import org.example.search.PdfSearchService;
 
@@ -27,7 +28,7 @@ public class Main {
         }
 
         final var extractor = new PdfBoxTextExtractor();
-        final var embedder = new DummyEmbeddingService(8);
+        final var embedder = chooseEmbedder();
         final ChromaClient chroma = new HttpChromaClient(chromaUrl);
         final var service = new PdfSearchService(extractor, embedder, chroma, collection);
 
@@ -49,5 +50,19 @@ public class Main {
     private static String envOr(String key, String def) {
         final String v = System.getenv(key);
         return v == null || v.isBlank() ? def : v;
+    }
+
+    private static org.example.search.EmbeddingService chooseEmbedder() {
+        final String key = System.getenv("OPENAI_API_KEY");
+        if (key != null && !key.isBlank()) {
+            System.out.println("Using OpenAI embeddings (model=" + envOr("OPENAI_EMBED_MODEL", "text-embedding-3-small") + ")");
+            try {
+                return new OpenAIEmbeddingService();
+            } catch (Exception e) {
+                System.err.println("Failed to initialize OpenAIEmbeddingService, falling back to Dummy: " + e.getMessage());
+            }
+        }
+        System.out.println("Using DummyEmbeddingService (deterministic test embeddings)");
+        return new DummyEmbeddingService(8);
     }
 }
