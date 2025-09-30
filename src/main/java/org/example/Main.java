@@ -33,22 +33,40 @@ public class Main {
         final var embedder = chooseEmbedder();
         final ChromaClient chroma = new HttpChromaClient(chromaUrl);
         final var extractor = new PdfBoxTextExtractor();
-        final var service = new PdfSearchService(extractor, embedder, chroma, collection);
 
         if (args == null || args.length == 0) {
-            // Backward-compatible default: index data/pdfs
+            // Default: index data/pdfs with doc2query from env
+            final var service = new PdfSearchService(extractor, embedder, chroma, collection, new org.example.search.SemanticChunker(), chooseDoc2Query(), envDoc2QueryCount());
             indexDefaultFolder(service);
             return;
         }
 
         final String cmd = args[0];
         switch (cmd) {
-            case "index":
+            case "index": {
+                // Read flags for doc2query
+                int count = envDoc2QueryCount();
+                boolean disable = false;
+                Path dir = null;
+                for (int i = 1; i < args.length; i++) {
+                    if ("--dir".equals(args[i]) && i + 1 < args.length) {
+                        dir = Path.of(args[++i]);
+                    } else if ("--doc2query-count".equals(args[i]) && i + 1 < args.length) {
+                        try { count = Integer.parseInt(args[++i]); } catch (NumberFormatException ignore) { }
+                    } else if ("--no-doc2query".equals(args[i])) {
+                        disable = true;
+                    }
+                }
+                final var doc2q = disable ? null : chooseDoc2Query();
+                final var service = new PdfSearchService(extractor, embedder, chroma, collection, new org.example.search.SemanticChunker(), doc2q, Math.max(0, count));
                 handleIndex(service, args);
                 break;
-            case "search":
+            }
+            case "search": {
+                final var service = new PdfSearchService(extractor, embedder, chroma, collection);
                 handleSearch(service, args);
                 break;
+            }
             case "help":
             case "-h":
             case "--help":
@@ -141,10 +159,10 @@ public class Main {
 
     private static void printHelp() {
         System.out.println("Usage:\n" +
-                "  ./gradlew run --args=\"index [--dir <path>]\"\n" +
+                "  ./gradlew run --args=\"index [--dir <path>] [--doc2query-count N] [--no-doc2query]\"\n" +
                 "  ./gradlew run --args=\"search --q <query> [--topK N]\"\n\n" +
                 "Env:\n" +
-                "  CHROMA_URL, COLLECTION_NAME, OPENAI_API_KEY, OPENAI_EMBED_MODEL\n");
+                "  CHROMA_URL, COLLECTION_NAME, OPENAI_API_KEY, OPENAI_EMBED_MODEL, OPENAI_BASE_URL, OPENAI_DOC2QUERY_MODEL, DOC2QUERY_COUNT\n");
     }
 
     private static String truncate(String s, int max) {
@@ -157,6 +175,28 @@ public class Main {
     private static String envOr(String key, String def) {
         final String v = System.getenv(key);
         return v == null || v.isBlank() ? def : v;
+    }
+
+    private static int envDoc2QueryCount() {
+        try {
+            return Integer.parseInt(envOr("DOC2QUERY_COUNT", "3"));
+        } catch (NumberFormatException e) {
+            return 3;
+        }
+    }
+
+    private static org.example.search.Doc2QueryGenerator chooseDoc2Query() {
+        final String key = System.getenv("OPENAI_API_KEY");
+        if (key != null && !key.isBlank()) {
+            try {
+                System.out.println("Using OpenAI doc2query (model=" + envOr("OPENAI_DOC2QUERY_MODEL", "gpt-4o-mini") + ")");
+                return new org.example.search.OpenAIDoc2QueryGenerator();
+            } catch (Exception e) {
+                System.err.println("Failed to initialize OpenAIDoc2QueryGenerator, falling back to simple: " + e.getMessage());
+            }
+        }
+        System.out.println("Using SimpleDoc2QueryGenerator (offline heuristic)");
+        return new org.example.search.SimpleDoc2QueryGenerator();
     }
 
     private static org.example.search.EmbeddingService chooseEmbedder() {
