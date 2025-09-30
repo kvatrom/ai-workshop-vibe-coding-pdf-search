@@ -51,7 +51,7 @@ public final class PdfSearchService {
                 .flatMap(pageChunk -> chunker.chunk(pageChunk.text(), pageChunk.pageNumber()))
                 .flatMap(chunk -> {
                     final List<ChromaClient.UpsertEmbedding> list = new java.util.ArrayList<>();
-                    final String chunkId = UUID.randomUUID().toString();
+                    final String chunkId = stableChunkId(filename, chunk.pageNumber(), chunk.text());
                     final double[] chunkVec = embeddings.embed(chunk.text());
                     final Map<String, Object> md = new HashMap<>();
                     md.put("filename", filename);
@@ -64,7 +64,7 @@ public final class PdfSearchService {
                         final List<String> qs = doc2Query.generateQuestions(chunk.text(), doc2QueryCount);
                         for (int i = 0; i < qs.size(); i++) {
                             final String q = qs.get(i);
-                            final String qId = chunkId + "#q" + i;
+                            final String qId = chunkId + "#q-" + hashHex(q);
                             final double[] qVec = embeddings.embed(q);
                             final Map<String, Object> qmd = new HashMap<>();
                             qmd.put("filename", filename);
@@ -86,5 +86,25 @@ public final class PdfSearchService {
     public List<ChromaClient.SearchResult> semanticSearch(String query, int topK) {
         final double[] vec = embeddings.embed(query);
         return chroma.query(vec, collectionName, topK);
+    }
+
+    private static String stableChunkId(String filename, int page, String text) {
+        final String base = (filename == null ? "unknown" : filename) + "|p=" + page + "|" + text;
+        return hashHex(base);
+    }
+
+    private static String hashHex(String s) {
+        try {
+            final java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            final byte[] bytes = md.digest((s == null ? "" : s).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            final StringBuilder sb = new StringBuilder(bytes.length * 2);
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
+            // Shorten to 32 hex chars for readability while keeping good uniqueness
+            return sb.length() > 32 ? sb.substring(0, 32) : sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 }
