@@ -17,13 +17,20 @@ public final class PdfSearchService {
     private final EmbeddingService embeddings;
     private final ChromaClient chroma;
     private final String collectionName;
+    private final SemanticChunker chunker;
 
     public PdfSearchService(PdfTextExtractor extractor, EmbeddingService embeddings, ChromaClient chroma,
             String collectionName) {
+        this(extractor, embeddings, chroma, collectionName, new SemanticChunker());
+    }
+
+    public PdfSearchService(PdfTextExtractor extractor, EmbeddingService embeddings, ChromaClient chroma,
+            String collectionName, SemanticChunker chunker) {
         this.extractor = Objects.requireNonNull(extractor);
         this.embeddings = Objects.requireNonNull(embeddings);
         this.chroma = Objects.requireNonNull(chroma);
         this.collectionName = Objects.requireNonNullElse(collectionName, "pdf-search");
+        this.chunker = Objects.requireNonNull(chunker);
     }
 
     public void indexPdf(InputStream pdfInput) {
@@ -32,6 +39,7 @@ public final class PdfSearchService {
 
     public void indexPdf(InputStream pdfInput, String filename) {
         final var items = extractor.extractChunks(pdfInput)
+                .flatMap(pageChunk -> chunker.chunk(pageChunk.text(), pageChunk.pageNumber()))
                 .map(chunk -> {
                     final String id = UUID.randomUUID().toString();
                     final double[] vec = embeddings.embed(chunk.text());
