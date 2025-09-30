@@ -29,7 +29,10 @@ public final class HttpChromaClient implements ChromaClient {
 
     public HttpChromaClient(String baseUrl) {
         this.baseUrl = Objects.requireNonNull(baseUrl, "baseUrl").replaceAll("/$", "");
-        this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+        this.http = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
         this.json = new ObjectMapper();
     }
 
