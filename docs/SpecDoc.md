@@ -2,7 +2,7 @@
 
 This document is the living specification for the PDF Semantic Search with ChromaDB project. It captures intent, requirements, and acceptance criteria for each incremental slice. It should be updated alongside code changes.
 
-Last updated: 2025-09-30 (OpenAI embeddings client optional)
+Last updated: 2025-09-30 (OpenAI embeddings E2E validation added)
 
 ## Purpose and Intent
 - Provide a minimal, testable foundation for ingesting PDFs, generating embeddings, upserting to ChromaDB, and performing semantic search.
@@ -138,16 +138,6 @@ Status: Completed
 - Query ranking refinement and evaluation harness.
 - CLI or minimal REST API to index and query.
 
-## Change Log
-- 2025-09-30: Added Spec Doc artifact and documented Slice 1 and Slice 2 structure.
-- 2025-09-30: Added Diary Log artifact; updated SpecDoc and CodeStyleDoc to reference maintenance of all three docs.
-- 2025-09-30: Added README.md with overview, requirements, and how to run; documented as Slice 4.
-
-
-- 2025-09-30: Added data/pdfs input folder, .gitignore, and README docs; documented as Slice 5.
-- 2025-09-30: Local ChromaDB integration with HttpChromaClient, Testcontainers integration test, updated README, and runtime indexer in Main; documented as Slice 6.
-
-
 ### Slice 7: OpenAI embeddings client (this change)
 Intent:
 - Provide an optional real embedding provider using OpenAI’s embeddings API while keeping default tests offline/deterministic.
@@ -164,5 +154,30 @@ Acceptance Criteria:
 
 Status: Completed
 
+### Slice 8: OpenAI API key validation via E2E test (this change)
+Intent:
+- Validate that when an OpenAI API key is provided, the OpenAIEmbeddingService can successfully call the embeddings endpoint.
+
+Functional Requirements:
+- Add an integration test that is executed only when an API key is present in the environment.
+- The test must call OpenAIEmbeddingService.embed on a sample string and assert a non-empty vector is returned.
+- Keep default unit tests offline; only run this test under the existing integrationTest task.
+- Be tolerant of a common env var typo by supporting OPENAOI_API_KEY as an alias.
+
+Acceptance Criteria:
+- ./gradlew clean build remains green without an API key (test skipped and excluded by default due to tag).
+- ./gradlew integrationTest passes when a valid OPENAI_API_KEY is present and fails with an invalid key (surface 401 from API).
+- SpecDoc and Diary updated to reflect this slice.
+
+Status: Completed
+
 ## Change Log
+- 2025-09-30: Added Spec Doc artifact and documented Slice 1 and Slice 2 structure.
+- 2025-09-30: Added Diary Log artifact; updated SpecDoc and CodeStyleDoc to reference maintenance of all three docs.
+- 2025-09-30: Added README.md with overview, requirements, and how to run; documented as Slice 4.
+
+
+- 2025-09-30: Added data/pdfs input folder, .gitignore, and README docs; documented as Slice 5.
+- 2025-09-30: Local ChromaDB integration with HttpChromaClient, Testcontainers integration test, updated README, and runtime indexer in Main; documented as Slice 6.
 - 2025-09-30: Added OpenAIEmbeddingService and runtime selection via env var; updated README; documented as Slice 7.
+- 2025-09-30: Added E2E integration test for OpenAIEmbeddingService; added OPENAOI_API_KEY alias support; documented as Slice 8.

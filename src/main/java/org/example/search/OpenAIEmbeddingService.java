@@ -29,7 +29,7 @@ public final class OpenAIEmbeddingService implements EmbeddingService {
     private final String model;
 
     public OpenAIEmbeddingService() {
-        this(System.getenv("OPENAI_API_KEY"),
+        this(firstNonBlank(System.getenv("OPENAI_API_KEY"), System.getenv("OPENAOI_API_KEY")),
                 orDefault(System.getenv("OPENAI_BASE_URL"), "https://api.openai.com"),
                 orDefault(System.getenv("OPENAI_EMBED_MODEL"), "text-embedding-3-small"));
     }
@@ -90,6 +90,18 @@ public final class OpenAIEmbeddingService implements EmbeddingService {
 
     private static String orDefault(String v, String def) {
         return v == null || v.isBlank() ? def : v;
+    }
+
+    private static String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String v : values) {
+            if (v != null && !v.isBlank()) {
+                return v;
+            }
+        }
+        return null;
     }
 
     private static String escape(String s) {

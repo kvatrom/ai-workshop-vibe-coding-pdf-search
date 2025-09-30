@@ -1,6 +1,6 @@
 # Diary Log
 
-Last updated: 2025-09-30 12:30 local
+Last updated: 2025-09-30 13:26 local
 
 Purpose
 - Keep a chronological, developer-facing log of prompts, decisions, errors, rollbacks, and reasoning tied to repository changes.
@@ -24,6 +24,14 @@ Entry Template
 ---
 
 ## Entries
+
+- Timestamp: 2025-09-30 13:26 local
+  Context: Slice 8 — Validate OpenAI API key via E2E test
+  Decisions: Added an integration E2E test that runs only when OPENAI_API_KEY (or alias OPENAOI_API_KEY) is set. The test calls OpenAIEmbeddingService.embed and asserts a non-empty vector. Updated OpenAIEmbeddingService to accept the alias env var. Updated SpecDoc accordingly.
+  Changes: Added src/test/java/org/example/search/OpenAIEmbeddingServiceE2ETest.java; modified OpenAIEmbeddingService to read OPENAOI_API_KEY if OPENAI_API_KEY is absent; updated docs/SpecDoc.md and docs/DiaryLogDoc.md header timestamp.
+  Errors/Rollbacks: None; default build remains green; integration test runs only when key is present.
+  Reasoning: Ensures that when credentials are supplied, the service is actually functional and the key is valid.
+  Follow-ups: Consider retries/backoff and rate limit handling for the OpenAI client in a future slice.
 
 - Timestamp: 2025-09-30 12:30 local
   Context: Slice 7 — Add OpenAI embeddings client (optional)
