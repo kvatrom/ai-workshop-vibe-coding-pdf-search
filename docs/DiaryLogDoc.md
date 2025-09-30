@@ -25,6 +25,30 @@ Entry Template
 
 ## Entries
 
+- Timestamp: 2025-09-30 14:50 local
+  Context: Implement doc2query (synthetic question expansion) and wire into CLI; ensure Chroma 0.6.3 compatibility; cleanups
+  Decisions: Added Doc2QueryGenerator with OpenAI and offline implementations; extended PdfSearchService to upsert synthetic questions linked to chunks; added CLI flags and env. Adjusted HttpChromaClient to tolerate boolean 201 on /add and forced HTTP/1.1. Removed unused v2 fallback/GET/PUT.
+  Changes: Added Doc2QueryGenerator, OpenAIDoc2QueryGenerator, SimpleDoc2QueryGenerator; modified PdfSearchService and Main; new unit test PdfSearchServiceDoc2QueryTest; updated README; cleaned HttpChromaClient. Builds/Checkstyle green; commits pushed.
+  Errors/Rollbacks: None.
+  Reasoning: Completes the exercise requirement for semantic chunking and synthetic query expansion; ensures compatibility with Chroma 0.6.3 responses.
+  Follow-ups: Implement idempotent IDs and pin integration tests to 0.6.3; update docs accordingly.
+
+- Timestamp: 2025-09-30 14:58 local
+  Context: Idempotent indexing (stable IDs)
+  Decisions: Use SHA-256 based stable IDs for chunks (filename|page|text) and derive question IDs from chunkId+hash(question) to avoid duplication on re-index.
+  Changes: Updated PdfSearchService; build green; committed and pushed.
+  Errors/Rollbacks: None.
+  Reasoning: Enables update semantics and prevents duplicate entries when indexing same content again.
+  Follow-ups: Pin Testcontainers image and reflect changes in SpecDoc.
+
+- Timestamp: 2025-09-30 15:02 local
+  Context: Pin integration tests to Chroma 0.6.3
+  Decisions: Updated ChromaIntegrationTest to use chromadb/chroma:0.6.3 explicitly.
+  Changes: Modified src/test/.../ChromaIntegrationTest.java; build green; committed and pushed.
+  Errors/Rollbacks: None.
+  Reasoning: Keeps tests aligned with the runtime environment and prevents drift.
+  Follow-ups: None beyond ongoing maintenance.
+
 - Timestamp: 2025-09-30 13:31 local
   Context: Typo correction — only OPENAI_API_KEY is supported
   Decisions: Removed support for the alias environment variable OPENAOI_API_KEY across code and tests; keep only OPENAI_API_KEY. Updated SpecDoc to reflect this correction.

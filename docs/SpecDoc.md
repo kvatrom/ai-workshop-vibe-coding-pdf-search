@@ -134,7 +134,6 @@ Status: Completed
 - Enhance Chroma client (robust error handling, retries, metadata, delete/upsert semantics).
 - Configurable chunking strategies (by characters, tokens, or semantic boundaries).
 - Real embedding provider integration (e.g., OpenAI or local model) with retry/backoff.
-- Persistence and idempotent indexing (document IDs, page references, metadata).
 - Query ranking refinement and evaluation harness.
 - CLI or minimal REST API to index and query.
 
@@ -171,13 +170,59 @@ Acceptance Criteria:
 
 Status: Completed
 
+### Slice 9: Doc2Query (synthetic query expansion) during indexing (this change)
+Intent:
+- Generate N synthetic user questions per semantic chunk to improve recall and QA-style queries.
+
+Functional Requirements:
+- Add Doc2QueryGenerator with OpenAI-backed implementation (chat completions) and an offline Simple fallback.
+- Extend PdfSearchService to upsert chunk + question embeddings; link questions to parent chunk via metadata (parentChunkId).
+- CLI flags: --doc2query-count, --no-doc2query; env DOC2QUERY_COUNT (default 3); support OPENAI_DOC2QUERY_MODEL.
+
+Acceptance Criteria:
+- Default build remains green (offline fallback used when no OPENAI_API_KEY).
+- Index mode generates and upserts questions; metadata includes filename/page/type.
+- Unit test verifies question upserts and linkage to chunk.
+
+Status: Completed
+
+### Slice 10: Idempotent indexing (stable IDs) (this change)
+Intent:
+- Avoid duplicate entries upon re-indexing the same document by using stable, deterministic IDs.
+
+Functional Requirements:
+- Derive chunk IDs from SHA-256 over filename + page + text; derive question IDs from chunkId + hash(question).
+- Preserve existing metadata; maintain parentChunkId linkage.
+
+Acceptance Criteria:
+- Re-running index over same inputs results in updates/replacements instead of new random IDs.
+- Build and tests remain green.
+
+Status: Completed
+
+### Slice 11: Chroma 0.6.3 compatibility and tests (this change)
+Intent:
+- Ensure the client and tests are compatible with Chroma 0.6.3.
+
+Functional Requirements:
+- Tolerate boolean 201 response on /api/v1/collections/{id}/add.
+- Force HTTP/1.1 on HttpClient to avoid h2c upgrade issues with some images.
+- Pin Testcontainers integration test image to chromadb/chroma:0.6.3.
+
+Acceptance Criteria:
+- Local start.sh uses 0.6.3; indexing runs without exceptions.
+- Integration tests pass when Docker is available.
+
+Status: Completed
+
 ## Change Log
 - 2025-09-30: Added Spec Doc artifact and documented Slice 1 and Slice 2 structure.
 - 2025-09-30: Added Diary Log artifact; updated SpecDoc and CodeStyleDoc to reference maintenance of all three docs.
 - 2025-09-30: Added README.md with overview, requirements, and how to run; documented as Slice 4.
-
-
 - 2025-09-30: Added data/pdfs input folder, .gitignore, and README docs; documented as Slice 5.
 - 2025-09-30: Local ChromaDB integration with HttpChromaClient, Testcontainers integration test, updated README, and runtime indexer in Main; documented as Slice 6.
 - 2025-09-30: Added OpenAIEmbeddingService and runtime selection via env var; updated README; documented as Slice 7.
-- 2025-09-30: Added E2E integration test for OpenAIEmbeddingService; added OPENAOI_API_KEY alias support; documented as Slice 8.
+- 2025-09-30: Added E2E integration test for OpenAIEmbeddingService; documented as Slice 8.
+- 2025-09-30: Implemented doc2query (synthetic question expansion) with OpenAI and offline fallback; documented as Slice 9.
+- 2025-09-30: Implemented idempotent indexing via stable IDs; documented as Slice 10.
+- 2025-09-30: Ensured Chroma 0.6.3 compatibility and pinned Testcontainers image; documented as Slice 11.
