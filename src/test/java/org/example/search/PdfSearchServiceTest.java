@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -47,12 +48,14 @@ class PdfSearchServiceTest {
         final var fakeChroma = new InMemoryChroma();
         final var service = new PdfSearchService(extractor, embedder, fakeChroma, "test-collection");
 
-        service.indexPdf(new ByteArrayInputStream(twoPagePdf()));
+        service.indexPdf(new ByteArrayInputStream(twoPagePdf()), "dummy.pdf");
         assertEquals(2, fakeChroma.upserted.size());
         assertFalse(fakeChroma.upserted.get(0).text().isBlank());
+        assertEquals("dummy.pdf", fakeChroma.upserted.get(0).metadata().get("filename"));
 
         final var results = service.semanticSearch("cats", 1);
         assertEquals(1, results.size());
+        assertEquals("dummy.pdf", results.get(0).metadata().get("filename"));
     }
 
     static class InMemoryChroma implements ChromaClient {
@@ -69,7 +72,7 @@ class PdfSearchServiceTest {
             // Return first topK items as dummy results with descending score
             return upserted.stream()
                     .limit(topK)
-                    .map(it -> new SearchResult(it.id(), it.text(), 1.0))
+                    .map(it -> new SearchResult(it.id(), it.text(), 1.0, Map.copyOf(it.metadata())))
                     .collect(Collectors.toList());
         }
     }

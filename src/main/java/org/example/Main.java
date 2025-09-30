@@ -92,7 +92,7 @@ public class Main {
             for (Path path : pdfs) {
                 System.out.println("Indexing: " + path.getFileName());
                 try (InputStream in = Files.newInputStream(path)) {
-                    service.indexPdf(in);
+                    service.indexPdf(in, path.getFileName().toString());
                 } catch (IOException e) {
                     System.err.println("Failed to index " + path + ": " + e.getMessage());
                 }
@@ -129,7 +129,11 @@ public class Main {
         }
         for (int i = 0; i < results.size(); i++) {
             final var r = results.get(i);
-            System.out.println("#" + (i + 1) + " score=" + String.format("%.4f", r.score()));
+            final Object fname = r.metadata() == null ? null : r.metadata().get("filename");
+            final Object page = r.metadata() == null ? null : r.metadata().get("page");
+            System.out.println("#" + (i + 1) + " score=" + String.format("%.4f", r.score())
+                    + (fname != null ? " file=" + fname : "")
+                    + (page != null ? " page=" + page : ""));
             System.out.println(truncate(r.text(), 400));
             System.out.println();
         }

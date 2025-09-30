@@ -1,7 +1,9 @@
 package org.example.search;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,8 +27,21 @@ public final class PdfSearchService {
     }
 
     public void indexPdf(InputStream pdfInput) {
+        indexPdf(pdfInput, "unknown");
+    }
+
+    public void indexPdf(InputStream pdfInput, String filename) {
         final var items = extractor.extractChunks(pdfInput)
-                .map(text -> new ChromaClient.UpsertEmbedding(UUID.randomUUID().toString(), embeddings.embed(text), text))
+                .map(chunk -> {
+                    final String id = UUID.randomUUID().toString();
+                    final double[] vec = embeddings.embed(chunk.text());
+                    final Map<String, Object> md = new HashMap<>();
+                    md.put("filename", filename);
+                    md.put("page", chunk.pageNumber());
+                    md.put("type", "chunk");
+                    md.put("chunkId", id);
+                    return new ChromaClient.UpsertEmbedding(id, vec, chunk.text(), md);
+                })
                 .collect(Collectors.toList());
         if (!items.isEmpty()) {
             chroma.upsert(items, collectionName);

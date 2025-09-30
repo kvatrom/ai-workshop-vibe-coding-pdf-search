@@ -47,12 +47,13 @@ public final class HttpChromaClient implements ChromaClient {
                 .map(this::toFloatList)
                 .toList());
         body.put("documents", items.stream().map(UpsertEmbedding::text).toList());
-        // metadatas optional
+        body.put("metadatas", items.stream().map(UpsertEmbedding::metadata).toList());
         final String url = baseUrl + "/api/v1/collections/" + cid + "/add";
         post(url, body);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<SearchResult> query(double[] embedding, String collectionName, int topK) {
         final String cid = ensureCollection(collectionName);
         final Map<String, Object> body = new HashMap<>();
@@ -60,21 +61,24 @@ public final class HttpChromaClient implements ChromaClient {
         body.put("n_results", topK);
         final String url = baseUrl + "/api/v1/collections/" + cid + "/query";
         final Map<String, Object> resp = post(url, body);
-        // Response format (typical): { "ids": [["id1", ...]], "distances": [[...]], "documents": [["text", ...]] }
+        // Response format (typical): { "ids": [[...]], "distances": [[...]], "documents": [[...]], "metadatas": [[{...}]] }
         final List<List<String>> ids = (List<List<String>>) resp.getOrDefault("ids", List.of());
         final List<List<String>> docs = (List<List<String>>) resp.getOrDefault("documents", List.of());
         final List<List<Double>> distances = (List<List<Double>>) resp.getOrDefault("distances", List.of());
+        final List<List<Map<String, Object>>> metas = (List<List<Map<String, Object>>>) resp.getOrDefault("metadatas", List.of());
         if (ids.isEmpty()) {
             return List.of();
         }
         final List<String> firstIds = ids.getFirst();
         final List<String> firstDocs = docs.isEmpty() ? List.of() : docs.getFirst();
         final List<Double> firstDistances = distances.isEmpty() ? List.of() : distances.getFirst();
+        final List<Map<String, Object>> firstMetas = metas.isEmpty() ? List.of() : metas.getFirst();
         return firstIds.stream().map(i -> firstIds.indexOf(i)).map(idx -> {
             final String id = firstIds.get(idx);
             final String text = idx < firstDocs.size() ? firstDocs.get(idx) : "";
             final double score = idx < firstDistances.size() ? safeScore(firstDistances.get(idx)) : 0.0;
-            return new SearchResult(id, text, score);
+            final Map<String, Object> md = idx < firstMetas.size() ? firstMetas.get(idx) : Map.of();
+            return new SearchResult(id, text, score, md);
         }).collect(Collectors.toList());
     }
 

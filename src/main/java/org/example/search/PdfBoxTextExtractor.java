@@ -15,14 +15,14 @@ import org.apache.pdfbox.text.PDFTextStripper;
 public final class PdfBoxTextExtractor implements PdfTextExtractor {
 
     @Override
-    public Stream<String> extractChunks(InputStream pdfInput) {
+    public Stream<Chunk> extractChunks(InputStream pdfInput) {
         Objects.requireNonNull(pdfInput, "pdfInput");
         try (PDDocument doc = PDDocument.load(pdfInput)) {
             final int pageCount = doc.getNumberOfPages();
             final PDFTextStripper stripper = new PDFTextStripper();
             final var list = IntStream.rangeClosed(1, pageCount)
                     .mapToObj(page -> extractPage(doc, stripper, page))
-                    .filter(s -> s != null && !s.isBlank())
+                    .filter(s -> s != null && !s.text().isBlank())
                     .toList();
             return list.stream();
         } catch (IOException e) {
@@ -30,11 +30,12 @@ public final class PdfBoxTextExtractor implements PdfTextExtractor {
         }
     }
 
-    private String extractPage(PDDocument doc, PDFTextStripper stripper, int page) {
+    private Chunk extractPage(PDDocument doc, PDFTextStripper stripper, int page) {
         try {
             stripper.setStartPage(page);
             stripper.setEndPage(page);
-            return stripper.getText(doc).trim();
+            final String text = stripper.getText(doc).trim();
+            return new Chunk(text, page);
         } catch (IOException e) {
             return null;
         }

@@ -38,8 +38,9 @@ class PdfBoxTextExtractorTest {
         final String content = "Hello PDF";
         final byte[] pdf = createSimplePdf(content);
         final PdfTextExtractor extractor = new PdfBoxTextExtractor();
-        final List<String> chunks = extractor.extractChunks(new ByteArrayInputStream(pdf)).collect(Collectors.toList());
+        final List<PdfTextExtractor.Chunk> chunks = extractor.extractChunks(new ByteArrayInputStream(pdf)).collect(Collectors.toList());
         assertEquals(1, chunks.size());
-        assertTrue(chunks.get(0).contains("Hello PDF"));
+        assertTrue(chunks.get(0).text().contains("Hello PDF"));
+        assertEquals(1, chunks.get(0).pageNumber());
     }
 }

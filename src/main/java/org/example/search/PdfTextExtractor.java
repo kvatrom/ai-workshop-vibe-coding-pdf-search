@@ -8,5 +8,8 @@ import java.util.stream.Stream;
  */
 @FunctionalInterface
 public interface PdfTextExtractor {
-    Stream<String> extractChunks(InputStream pdfInput);
+
+    record Chunk(String text, int pageNumber) { }
+
+    Stream<Chunk> extractChunks(InputStream pdfInput);
 }
